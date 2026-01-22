@@ -1,34 +1,39 @@
-const https = require('https');
-
-module.exports = async (req, res) => {
-  const { username } = req.query;
-  
-  if (!username) {
-    return res.status(400).json({ error: 'Username required' });
+export default async function handler(request, response) {
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    response.status(200).end();
+    return;
   }
 
-  const url = `https://boardgamegeek.com/xmlapi2/collection?username=${username}&stats=1&subtype=boardgame`;
+  const username = request.query.username;
+  
+  if (!username) {
+    response.status(400).json({ error: 'Username parameter required' });
+    return;
+  }
 
-  https.get(url, (response) => {
-    let data = '';
-    
-    response.on('data', (chunk) => {
-      data += chunk;
-    });
-    
-    response.on('end', () => {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Content-Type', 'application/xml');
-      res.status(200).send(data);
-    });
-  }).on('error', (error) => {
-    res.status(500).json({ error: error.message });
-  });
-};
-```
+  try {
+    const bggResponse = await fetch(
+      `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&stats=1&subtype=boardgame`,
+      { method: 'GET' }
+    );
 
-6. **Click "Commit changes"**
-7. **Wait 30 seconds** for Vercel to auto-redeploy
-8. **Try the test URL again:**
-```
-   https://bgg-wrapped-backend.vercel.app/api/bgg-proxy?username=Hipopotam
+    if (!bggResponse.ok) {
+      throw new Error(`BGG API returned status ${bggResponse.status}`);
+    }
+
+    const xmlData = await bggResponse.text();
+
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.setHeader('Content-Type', 'application/xml');
+    response.status(200).send(xmlData);
+
+  } catch (error) {
+    console.error('Error fetching BGG data:', error);
+    response.status(500).json({ 
+      error: 'Failed to fetch data from BoardGameGeek',
+      details: error.message 
+    });
+  }
+}
