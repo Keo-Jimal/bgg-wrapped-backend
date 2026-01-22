@@ -1,32 +1,34 @@
-exports.handler = async (event) => {
-  const { username } = event.queryStringParameters;
+const https = require('https');
+
+module.exports = async (req, res) => {
+  const { username } = req.query;
   
   if (!username) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Username required' })
-    };
+    return res.status(400).json({ error: 'Username required' });
   }
 
-  try {
-    const response = await fetch(
-      `https://boardgamegeek.com/xmlapi2/collection?username=${username}&stats=1&subtype=boardgame`
-    );
+  const url = `https://boardgamegeek.com/xmlapi2/collection?username=${username}&stats=1&subtype=boardgame`;
+
+  https.get(url, (response) => {
+    let data = '';
     
-    const data = await response.text();
+    response.on('data', (chunk) => {
+      data += chunk;
+    });
     
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/xml',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: data
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
+    response.on('end', () => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Content-Type', 'application/xml');
+      res.status(200).send(data);
+    });
+  }).on('error', (error) => {
+    res.status(500).json({ error: error.message });
+  });
 };
+```
+
+6. **Click "Commit changes"**
+7. **Wait 30 seconds** for Vercel to auto-redeploy
+8. **Try the test URL again:**
+```
+   https://bgg-wrapped-backend.vercel.app/api/bgg-proxy?username=Hipopotam
