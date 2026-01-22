@@ -15,7 +15,12 @@ export default async function handler(request, response) {
   try {
     const bggResponse = await fetch(
       `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&stats=1&subtype=boardgame`,
-      { method: 'GET' }
+      { 
+        method: 'GET',
+        headers: {
+          'User-Agent': 'BGGWrapped/1.0 (Board Game Collection Viewer)'
+        }
+      }
     );
 
     if (!bggResponse.ok) {
