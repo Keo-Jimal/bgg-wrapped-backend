@@ -1,5 +1,4 @@
 export default async function handler(request, response) {
-  // Handle CORS preflight
   if (request.method === 'OPTIONS') {
     response.status(200).end();
     return;
@@ -18,17 +17,13 @@ export default async function handler(request, response) {
       { 
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/xml, text/xml, */*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br'
+          'Authorization': `Bearer ${process.env.BGG_API_TOKEN}`
         }
       }
     );
 
     if (!bggResponse.ok) {
-      const errorText = await bggResponse.text();
-      throw new Error(`BGG API returned status ${bggResponse.status}: ${errorText}`);
+      throw new Error(`BGG API returned status ${bggResponse.status}`);
     }
 
     const xmlData = await bggResponse.text();
