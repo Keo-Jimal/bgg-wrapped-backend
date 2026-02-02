@@ -12,15 +12,18 @@ export default async function handler(request, response) {
   }
 
   try {
-    const bggResponse = await fetch(
-      `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&stats=1&subtype=boardgame`,
-      { 
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${process.env.BGG_API_TOKEN}`
-        }
+  console.log('Token exists:', !!process.env.BGG_API_TOKEN); // Log if token exists
+  console.log('Token length:', process.env.BGG_API_TOKEN?.length); // Log length
+  
+  const bggResponse = await fetch(
+    `https://boardgamegeek.com/xmlapi2/collection?username=${encodeURIComponent(username)}&stats=1&subtype=boardgame`,
+    {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.BGG_API_TOKEN}`
       }
-    );
+    }
+  );
 
     if (!bggResponse.ok) {
       throw new Error(`BGG API returned status ${bggResponse.status}`);
@@ -41,3 +44,4 @@ export default async function handler(request, response) {
     });
   }
 }
+
